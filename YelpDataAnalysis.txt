@@ -375,28 +375,50 @@ Part 2: Inferences and Analysis
 1. Pick one city and category of your choice and group the businesses in that city or category by their overall star rating. Compare the businesses with 2-3 stars to the businesses with 4-5 stars and answer the following questions. Include your code.
 	
 i. Do the two groups you chose to analyze have a different distribution of hours?
-
+It looks that the group with 4-5 stars tends to have shorter time in hours than the group with 2-3 stars. Since the query result are only displayed 25 entries each time, I have to change the sorting order in between 'ASC' and 'DESC' to get a full glance of it.
 
 ii. Do the two groups you chose to analyze have a different number of reviews?
-         
+There is no clear correlation between number of reviews and star ratings. The number of reviews from the group with 4-5 stars ranges from 8 to 89, whereas that from the group with 2-3 stars also ranges from 5 to 47. It can hardly be determined that more reviews lead to better rating.
          
 iii. Are you able to infer anything from the location data provided between these two groups? Explain.
+No. The samples are too limited to get to any conclusions. I only have 6 samples under the query. 
 
 SQL code used for analysis:
 
+SELECT B.name, B.review_count, B.stars, B.address, H.hours,
+	   CASE
+		  WHEN B.stars BETWEEN 2 AND 3 THEN '2-3 stars'
+		  WHEN B.stars BETWEEN 4 AND 5 THEN '4-5 stars'
+	   END AS star_rating
+FROM business B 
+INNER JOIN category C ON B.id = C.business_id
+INNER JOIN hours H ON B.id = H.business_id
+WHERE (B.city = 'Toronto' AND C.category LIKE 'restaurants')
+  AND ((B.stars BETWEEN 2 AND 3) OR (B.stars BETWEEN 4 AND 5))
+ORDER BY star_rating ASC;
 		
 		
 2. Group business based on the ones that are open and the ones that are closed. What differences can you find between the ones that are still open and the ones that are closed? List at least two differences and the SQL code you used to arrive at your answer.
 		
 i. Difference 1:
-         
-         
-ii. Difference 2:
-         
-         
-         
-SQL code used for analysis:
+The average number of reviews of closed business (23.20) is less than that of open business (31.76).
 
+ii. Difference 2:
+The average number of stars of closed business (3.52) is slightly lower than that of open business (3.68).
+
+
+SQL code used for analysis:
+SELECT is_open, AVG(review_count) as review_average, AVG(stars) as stars_average
+FROM business
+GROUP BY is_open;
+
+Query result:
++---------+----------------+---------------+
+| is_open | review_average | stars_average |
++---------+----------------+---------------+
+|       0 |  23.1980263158 | 3.52039473684 |
+|       1 |  31.7570754717 | 3.67900943396 |
++---------+----------------+---------------+
 	
 	
 3. For this last part of your analysis, you are going to choose the type of analysis you want to conduct on the Yelp dataset and are going to prepare the data for analysis.
@@ -404,12 +426,67 @@ SQL code used for analysis:
 Ideas for analysis include: Parsing out keywords and business attributes for sentiment analysis, clustering businesses to find commonalities or anomalies between them, predicting the overall star rating for a business, predicting the number of fans a user will have, and so on. These are just a few examples to get you started, so feel free to be creative and come up with your own problem you want to solve. Provide answers, in-line, to all of the following:
 	
 i. Indicate the type of analysis you chose to do:
-         
+I want to find if there is correlation between the length of open hours and star ratings.
          
 ii. Write 1-2 brief paragraphs on the type of data you will need for your analysis and why you chose that data:
-                           
+In order to carry out this experiment, I need the average star ratings of each business and their corresponding open hours. The open hours are given as a string like 'Monday|12:00-23:00' which requires propossing to retrieve the hours for each day. I used the 'CASE' statement to do the matching and extraction. One thing needs to note is that only a small portion of businesses have the hours attributes with them (117 in total), so this experiment is not exclusive and not extendable to the rest of businesses.
                   
 iii. Output of your finished dataset:
-         
++-------------------------------+-----------+--------------+---------------+-----------------+----------------+--------------+----------------+--------------+
+| name                          | stars_avg | monday_hours | tuesday_hours | wednesday_hours | thursday_hours | friday_hours | saturday_hours | sunday_hours |
++-------------------------------+-----------+--------------+---------------+-----------------+----------------+--------------+----------------+--------------+
+| Flaming Kitchen               |       3.0 | 12:00-23:00  | 12:00-23:00   | 12:00-23:00     | 12:00-23:00    | 12:00-23:00  | 12:00-23:00    | 12:00-23:00  |
+| Freeman's Car Stereo          |       3.5 | 9:00-19:00   | 9:00-19:00    | 9:00-19:00      | 9:00-19:00     | 9:00-19:00   | 9:00-17:00     | None         |
+| Eklectic Pie - Mesa           |       4.0 | 11:00-21:00  | 11:00-21:00   | 11:00-21:00     | 11:00-21:00    | 11:00-22:00  | 11:00-22:00    | 11:00-21:00  |
+| Wooly Wonders                 |       3.5 | 10:00-16:00  | 10:00-19:00   | 10:00-16:00     | 10:00-19:00    | 10:00-16:00  | 10:00-16:00    | None         |
+| Motors & More                 |       5.0 | 7:00-17:00   | 7:00-17:00    | 7:00-17:00      | 7:00-17:00     | 7:00-17:00   | 8:00-12:00     | None         |
+| West Side Market              |       4.5 | 7:00-16:00   | None          | 7:00-16:00      | None           | 7:00-18:00   | 7:00-18:00     | 10:00-16:00  |
+| Baby Cakes                    |       3.5 | None         | 11:00-17:00   | 11:00-17:00     | 11:00-20:00    | 11:00-17:00  | 10:00-17:00    | None         |
+| The Wine Mill                 |       4.5 | None         | 15:00-21:00   | 15:00-21:00     | 15:00-21:00    | 15:00-23:00  | 15:00-23:00    | 14:00-18:00  |
+| Brubaker's Pub                |       3.0 | 11:00-2:30   | 11:00-2:30    | 11:00-2:30      | 11:00-2:30     | 11:00-2:30   | 11:00-2:30     | 12:00-2:30   |
+| Snip-its Rocky River          |       2.5 | 10:00-19:00  | 10:00-19:00   | 10:00-19:00     | 10:00-19:00    | 10:00-19:00  | 9:00-17:30     | 10:00-16:00  |
+| Taliesin West                 |       4.5 | 8:30-14:30   | 8:30-17:00    | 8:30-17:00      | 8:30-14:30     | 8:30-20:00   | 8:30-15:00     | 8:30-15:00   |
+| Fresh Bonsai Nails & Spa      |       1.5 | 9:30-19:00   | 9:30-19:00    | 9:30-19:00      | 9:30-19:00     | 9:30-19:00   | 9:30-18:00     | 9:30-16:00   |
+| Standard Restaurant Supply    |       3.5 | 8:00-18:00   | 8:00-18:00    | 8:00-18:00      | 8:00-18:00     | 8:00-18:00   | 9:00-17:00     | None         |
+| What A Bagel                  |       3.0 | 6:00-15:30   | 6:00-15:30    | 6:00-15:30      | 6:00-15:30     | 6:00-15:30   | 6:00-15:30     | None         |
+| Pinnacle Fencing Solutions    |       4.0 | 8:00-16:00   | 8:00-16:00    | 8:00-16:00      | 8:00-16:00     | 8:00-16:00   | None           | None         |
+| Alterations Express           |       4.0 | 8:00-19:00   | 8:00-19:00    | 8:00-19:00      | 8:00-19:00     | 8:00-19:00   | 8:00-18:00     | None         |
+| Extra Space Storage           |       4.0 | 8:00-17:30   | 8:00-17:30    | 8:00-17:30      | 8:00-17:30     | 8:00-17:30   | 8:00-17:30     | 10:00-14:00  |
+| Cabin Fever                   |       4.5 | 16:00-2:00   | 18:00-2:00    | 18:00-2:00      | 18:00-2:00     | 18:00-2:00   | 16:00-2:00     | 16:00-2:00   |
+| Christian Brothers Automotive |       5.0 | 7:00-18:00   | 7:00-18:00    | 7:00-18:00      | 7:00-18:00     | 7:00-18:00   | None           | None         |
+| A & A Traders                 |       3.5 | 9:00-18:00   | 9:00-18:00    | 9:00-18:00      | 9:00-18:00     | 9:00-18:00   | 9:00-18:00     | None         |
+| Gussied Up                    |       4.5 | None         | 11:00-19:00   | 11:00-19:00     | 11:00-19:00    | 11:00-19:00  | 11:00-17:00    | 12:00-16:00  |
+| Buddy's Muffler & Exhaust     |       5.0 | 8:30-17:00   | 8:30-17:00    | 8:30-17:00      | 8:30-17:00     | 8:30-17:00   | 9:00-15:00     | None         |
+| Five Guys                     |       3.5 | 10:00-22:00  | 10:00-22:00   | 10:00-22:00     | 10:00-22:00    | 10:00-22:00  | 10:00-22:00    | 10:00-22:00  |
+| Innercity MMA                 |       5.0 | 17:00-22:00  | 18:00-22:00   | 17:00-22:00     | 18:00-22:00    | 17:00-22:00  | None           | None         |
+| All Storage - Anthem          |       3.5 | 9:00-16:30   | 9:00-16:30    | 9:00-16:30      | 9:00-16:30     | 9:00-16:30   | 9:00-16:30     | None         |
++-------------------------------+-----------+--------------+---------------+-----------------+----------------+--------------+----------------+--------------+
+(Output limit exceeded, 25 of 117 total rows shown)
          
 iv. Provide the SQL code you used to create your final dataset:
+SELECT b.name, 
+      AVG(b.stars) as stars_avg, 
+      MAX(CASE
+        WHEN h.hours LIKE 'Monday|%' THEN TRIM(h.hours, 'Monday|%')
+      END) AS monday_hours,
+      MAX(CASE
+        WHEN h.hours LIKE 'Tuesday|%' THEN TRIM(h.hours, 'Tuesday|%')
+      END) AS tuesday_hours,
+      MAX(CASE
+        WHEN h.hours LIKE 'Wednesday|%' THEN TRIM(h.hours, 'Wednesday|%')
+      END) AS wednesday_hours,
+      MAX(CASE
+        WHEN h.hours LIKE 'Thursday|%' THEN TRIM(h.hours, 'Thursday|%')
+      END) AS thursday_hours,
+      MAX(CASE
+        WHEN h.hours LIKE 'Friday|%' THEN TRIM(h.hours, 'Friday|%')
+      END) AS friday_hours,
+      MAX(CASE
+        WHEN h.hours LIKE 'Saturday|%' THEN TRIM(h.hours, 'Saturday|%')
+      END) AS saturday_hours,
+      MAX(CASE
+        WHEN h.hours LIKE 'Sunday|%' THEN TRIM(h.hours, 'Sunday|%')
+      END) AS sunday_hours
+FROM business b
+INNER JOIN hours h ON b.id = h.business_id
+GROUP BY b.id;
